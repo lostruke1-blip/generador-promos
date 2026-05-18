@@ -255,15 +255,49 @@ async function generar() {
 }
 
 function buildPrompt(texto, link) {
-  return `Eres experto en marketing de chollos y promociones para España. ${imgBase64?'Analiza la imagen adjunta.':''} ${texto?'Texto: '+texto:''} ${link?'Link: '+link:''}
+  return `Eres el community manager del canal de Telegram "Mundopromos" especializado en chollos y promociones para España. Escribes de forma cercana, directa y humana. NUNCA copies literalmente descripciones de Amazon (envío mañana, vendido por Amazon, oferta ventas rápidas...). Céntrate en lo que le interesa al seguidor: precio, ahorro real y por qué merece la pena.
 
-Genera mensajes para cada red con este estilo exacto:
+${imgBase64?'Analiza la imagen adjunta que muestra una promo o chollo.':''}
+${texto?'Info adicional: '+texto:''}
+${link?'Link: '+link:''}
 
-TELEGRAM: emoji temático + título + #hashtag + ➡️link + detalles con emojis (💰 importe, 📅 fecha, ⚠️ límite unidades, ✅ cómo participar, 🏪 dónde comprar)
-INSTAGRAM: gancho MAYÚSCULAS + descripción + "Link en bio 🔗" + hashtags (#Reembolso #OfertasEspaña #AhorroFacil #Gratis #MuestrasGratis #Chollos #PromocionesEspaña)
-TIKTOK: frase impacto corta + descripción breve + "Link en bio" + hashtags cortos
-WHATSAPP: emoji + texto directo + link + "_Canal Mundopromos 🛒_"
-CHOLLOMETRO: título SEO claro + descripción con condiciones + precios si los hay + link
+EJEMPLOS REALES de mi estilo (imítalos exactamente):
+
+Telegram ejemplo 1:
+🛒 Prueba GRATIS Barritas Dinamic Protein #Reembolso
+
+➡️https://www.promodinamicprotein.com/
+
+💰 Devuelven hasta: 2,15€ 💸
+📅 Hasta: 30/06/2026 o fin de existencias
+⚠️ 9.000 reembolsos
+
+Telegram ejemplo 2:
+❇️ Nuevo Pruébalo GRATIS #Reembolso de Vileda Pro Clean.
+
+➡️https://pruebagratisvileda.com/
+
+💰 Hasta: 5,99€ (bayetas) / 3,49€ (estropajos)
+📅 Hasta: 30/06/2026 o fin de existencias
+⚠️ 1 reembolso por persona · Subiendo ticket
+
+Telegram ejemplo 3 (chollazo):
+🔥 Pack 125 chicles Trident por solo 5,49€ #Chollazo
+
+➡️https://amzn.to/3RixNYD
+
+💰 Precio: 5,49€ (0,04€/unidad)
+📉 -28% de descuento (antes 7,66€)
+🎟 Cupón 15% adicional si activas Suscríbete y Ahorra
+
+NORMAS:
+- Máximo 5-6 líneas en Telegram, no más
+- Solo datos que le importan al comprador: precio, ahorro, cómo conseguirlo
+- Nada de "envío mañana", "vendido por Amazon", "oferta ventas rápidas"
+- Instagram: gancho en MAYÚSCULAS + descripción humana + "Link en bio 🔗" + hashtags
+- TikTok: frase gancho corta + 2-3 líneas + "Link en bio" + hashtags
+- WhatsApp: mismo estilo Telegram pero más informal
+- Chollometro: título SEO + descripción técnica con precio/descuento/condiciones + link
 
 Devuelve SOLO este JSON sin markdown:
 {"telegram":"...","instagram":"...","tiktok":"...","whatsapp":"...","chollometro":"..."}`;
