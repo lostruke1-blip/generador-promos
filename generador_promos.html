@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador Promos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #13161e;
+    --card: #191d28;
+    --border: #252b3b;
+    --accent: #00e5ff;
+    --text: #e8eaf0;
+    --muted: #5a6480;
+    --green: #06d6a0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; padding:20px 16px 80px; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(0,229,255,.05) 0%,transparent 60%); pointer-events:none; z-index:0; }
+  .container { max-width:600px; margin:0 auto; position:relative; z-index:1; }
+  header { padding:20px 0 16px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  h1 { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  h1 span { color:var(--accent); }
+  .sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+  .card-title { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:12px; }
+  label { display:block; font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:5px; }
+  input[type=text], input[type=password], textarea {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:'DM Mono',monospace;
+    font-size:13px; padding:10px 12px; outline:none; transition:border-color .2s; -webkit-appearance:none;
+  }
+  textarea { resize:vertical; min-height:80px; line-height:1.6; }
+  input:focus, textarea:focus { border-color:var(--accent); }
+  .field { margin-bottom:12px; }
+  .field:last-child { margin-bottom:0; }
+  .key-row { display:flex; gap:8px; }
+  .key-row input { flex:1; }
+  .save-btn { padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; white-space:nowrap; transition:all .15s; flex-shrink:0; }
+  .save-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .save-btn.saved { border-color:var(--green); color:var(--green); }
+  .key-hint { font-size:11px; color:var(--muted); margin-top:5px; }
+  .key-hint a { color:var(--accent); text-decoration:none; }
+  .upload-zone { border:1.5px dashed var(--border); border-radius:10px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; position:relative; }
+  .upload-zone:hover { border-color:var(--accent); background:rgba(0,229,255,.03); }
+  .upload-zone.has-img { border-style:solid; border-color:var(--accent); padding:8px; }
+  .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:24px; margin-bottom:6px; }
+  .upload-text { font-size:12px; color:var(--muted); }
+  .upload-text strong { color:var(--accent); }
+  #preview { width:100%; max-height:180px; object-fit:contain; border-radius:6px; display:none; pointer-events:none; }
+  .remove-img { display:none; margin-top:6px; font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; font-family:'DM Mono',monospace; }
+  .remove-img:hover { color:var(--accent); }
+  .gen-btn { width:100%; padding:13px; background:var(--accent); border:none; border-radius:10px; color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:all .2s; box-shadow:0 0 20px rgba(0,229,255,.2); margin-bottom:12px; }
+  .gen-btn:hover { transform:translateY(-1px); box-shadow:0 0 28px rgba(0,229,255,.35); }
+  .gen-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .loader { display:none; text-align:center; padding:16px; color:var(--muted); font-size:13px; }
+  .loader.show { display:block; }
+  @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+  .dots::after { content:'.'; animation:dots 1.2s infinite; }
+  .tabs { display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:10px; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { flex:1; min-width:70px; padding:7px 4px; border-radius:7px; font-size:11px; font-family:'Syne',sans-serif; font-weight:600; cursor:pointer; text-align:center; color:var(--muted); border:none; background:transparent; transition:all .15s; white-space:nowrap; }
+  .tab.active { background:var(--card); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .output-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; font-size:13px; line-height:1.8; white-space:pre-wrap; word-break:break-word; color:var(--text); min-height:80px; position:relative; }
+  .copy-btn { position:absolute; top:10px; right:10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--muted); font-family:'DM Mono',monospace; font-size:11px; padding:4px 10px; cursor:pointer; transition:all .15s; }
+  .copy-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .copy-btn.ok { color:var(--green); border-color:var(--green); }
+  .chars { font-size:10px; color:var(--muted); text-align:right; margin-top:4px; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--card); border:1px solid var(--green); border-radius:8px; color:var(--green); font-size:12px; padding:8px 16px; transition:transform .3s; z-index:100; pointer-events:none; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <div>
+        <h1>Generador <span>Promos</span></h1>
+        <div class="sub">Imagen + texto + link → listo para todas las redes</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">API Key Anthropic</div>
+    <div class="key-row">
+      <input type="password" id="apikey" placeholder="sk-ant-..." />
+      <button class="save-btn" id="savebtn" onclick="guardarKey()">Guardar</button>
+    </div>
+    <p class="key-hint">Consíguela en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Info de la promo — todo opcional</div>
+
+    <div class="field">
+      <label>Captura o imagen</label>
+      <div class="upload-zone" id="dropzone">
+        <input type="file" id="imgfile" accept="image/*" onchange="onFile(this)" />
+        <div id="placeholder">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Pulsa para subir imagen<br><strong>Captura, foto, screenshot...</strong></div>
+        </div>
+        <img id="preview" />
+        <button class="remove-img" id="removebtn" onclick="quitarImagen(event)">✕ Quitar imagen</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Texto de la promo</label>
+      <textarea id="texto" placeholder="Pega el mensaje del bot, el título, cualquier info..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Link de participación</label>
+      <input type="text" id="link" placeholder="https://..." />
+    </div>
+  </div>
+
+  <button class="gen-btn" id="genbtn" onclick="generar()">⚡ Generar para todas las redes</button>
+  <div class="loader" id="loader">Analizando con IA<span class="dots"></span></div>
+
+  <div id="resultado" style="display:none;">
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('tg',this)">✈️ Telegram</button>
+      <button class="tab" onclick="setTab('ig',this)">📸 Instagram</button>
+      <button class="tab" onclick="setTab('tt',this)">🎵 TikTok</button>
+      <button class="tab" onclick="setTab('wa',this)">💬 WhatsApp</button>
+      <button class="tab" onclick="setTab('ch',this)">🔥 Chollometro</button>
+    </div>
+    <div id="panel-tg" class="tab-panel active"><div class="output-box"><button class="copy-btn" onclick="copiar('tg',this)">Copiar</button><span id="out-tg"></span></div><div class="chars" id="chars-tg"></div></div>
+    <div id="panel-ig" class="tab-panel"><div class="output-box"><button class="copy-btn" onclick="copiar('ig',this)">Copiar</button><span id="out-ig"></span></div><div class="chars" id="chars-ig"></div></div>
+    <div id="panel-tt" class="tab-panel"><div class="output-box"><button class="copy-btn" onclick="copiar('tt',this)">Copiar</button><span id="out-tt"></span></div><div class="chars" id="chars-tt"></div></div>
+    <div id="panel-wa" class="tab-panel"><div class="output-box"><button class="copy-btn" onclick="copiar('wa',this)">Copiar</button><span id="out-wa"></span></div><div class="chars" id="chars-wa"></div></div>
+    <div id="panel-ch" class="tab-panel"><div class="output-box"><button class="copy-btn" onclick="copiar('ch',this)">Copiar</button><span id="out-ch"></span></div><div class="chars" id="chars-ch"></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Copiado</div>
+
+<script>
+// API Key
+const apikeyInput = document.getElementById('apikey');
+const saved = localStorage.getItem('anthropic_key') || '';
+if (saved) {
+  apikeyInput.value = saved;
+  document.getElementById('savebtn').textContent = 'Guardada ✓';
+  document.getElementById('savebtn').classList.add('saved');
+}
+
+function guardarKey() {
+  const k = apikeyInput.value.trim();
+  if (!k) { alert('Pon tu API key primero'); return; }
+  localStorage.setItem('anthropic_key', k);
+  const btn = document.getElementById('savebtn');
+  btn.textContent = 'Guardada ✓';
+  btn.classList.add('saved');
+  showToast('🔑 API Key guardada');
+}
+
+// Imagen
+let imgBase64 = null, imgMediaType = 'image/jpeg';
+
+function onFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  imgMediaType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imgBase64 = e.target.result.split(',')[1];
+    document.getElementById('preview').src = e.target.result;
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('removebtn').style.display = 'block';
+    document.getElementById('dropzone').classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+}
+
+function quitarImagen(e) {
+  e.stopPropagation();
+  imgBase64 = null;
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'block';
+  document.getElementById('removebtn').style.display = 'none';
+  document.getElementById('dropzone').classList.remove('has-img');
+  document.getElementById('imgfile').value = '';
+}
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); });
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer(); dt.items.add(file);
+    document.getElementById('imgfile').files = dt.files;
+    onFile(document.getElementById('imgfile'));
+  }
+});
+
+// Generar
+async function generar() {
+  const apikey = localStorage.getItem('anthropic_key') || apikeyInput.value.trim();
+  if (!apikey) { alert('Guarda tu API Key primero'); return; }
+
+  const texto = document.getElementById('texto').value.trim();
+  const link  = document.getElementById('link').value.trim();
+  if (!imgBase64 && !texto && !link) { alert('Añade imagen, texto o link'); return; }
+
+  const btn = document.getElementById('genbtn');
+  btn.disabled = true;
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('resultado').style.display = 'none';
+
+  try {
+    const content = [];
+    if (imgBase64) content.push({ type:'image', source:{ type:'base64', media_type:imgMediaType, data:imgBase64 } });
+    content.push({ type:'text', text:buildPrompt(texto, link) });
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apikey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:2000, messages:[{ role:'user', content }] })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || `Error ${resp.status}`);
+
+    const raw = (data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    let json;
+    try { json = JSON.parse(raw); } catch { throw new Error('Error procesando respuesta. Inténtalo de nuevo.'); }
+    mostrarResultados(json);
+
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loader').classList.remove('show');
+  }
+}
+
+function buildPrompt(texto, link) {
+  return `Eres experto en marketing de chollos y promociones para España. ${imgBase64?'Analiza la imagen adjunta.':''} ${texto?'Texto: '+texto:''} ${link?'Link: '+link:''}
+
+Genera mensajes para cada red con este estilo exacto:
+
+TELEGRAM: emoji temático + título + #hashtag + ➡️link + detalles con emojis (💰 importe, 📅 fecha, ⚠️ límite unidades, ✅ cómo participar, 🏪 dónde comprar)
+INSTAGRAM: gancho MAYÚSCULAS + descripción + "Link en bio 🔗" + hashtags (#Reembolso #OfertasEspaña #AhorroFacil #Gratis #MuestrasGratis #Chollos #PromocionesEspaña)
+TIKTOK: frase impacto corta + descripción breve + "Link en bio" + hashtags cortos
+WHATSAPP: emoji + texto directo + link + "_Canal Mundopromos 🛒_"
+CHOLLOMETRO: título SEO claro + descripción con condiciones + precios si los hay + link
+
+Devuelve SOLO este JSON sin markdown:
+{"telegram":"...","instagram":"...","tiktok":"...","whatsapp":"...","chollometro":"..."}`;
+}
+
+function mostrarResultados(data) {
+  [['tg','telegram'],['ig','instagram'],['tt','tiktok'],['wa','whatsapp'],['ch','chollometro']].forEach(([id,key]) => {
+    const txt = data[key]||'';
+    document.getElementById('out-'+id).textContent = txt;
+    document.getElementById('chars-'+id).textContent = txt.length+' caracteres';
+  });
+  document.getElementById('resultado').style.display = 'block';
+  setTab('tg', document.querySelector('.tab'));
+  setTimeout(() => document.getElementById('resultado').scrollIntoView({behavior:'smooth',block:'start'}), 100);
+}
+
+function setTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+function copiar(id, btn) {
+  navigator.clipboard.writeText(document.getElementById('out-'+id).textContent).then(() => {
+    btn.textContent='✓'; btn.classList.add('ok');
+    setTimeout(()=>{ btn.textContent='Copiar'; btn.classList.remove('ok'); }, 2000);
+    showToast('✅ Copiado al portapapeles');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
